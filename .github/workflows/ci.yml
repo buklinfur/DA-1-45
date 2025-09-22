@@ -8,11 +8,11 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: [3.11]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Checkout repository
@@ -23,35 +23,48 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
+    - name: Install dependencies on Ubuntu/macOS
+      if: runner.os != 'Windows'
       run: |
         python -m venv .venv
-        # Windows uses PowerShell, Ubuntu/macOS use bash
-        if [ $RUNNER_OS != 'Windows' ]; then
-          source .venv/bin/activate
-        else
-          ./.venv/Scripts/Activate.ps1
-        fi
+        source .venv/bin/activate
         pip install -e .
         pip install -r requirements.txt
       shell: bash
 
-    - name: Run CLI basic check
+    - name: Install dependencies on Windows
+      if: runner.os == 'Windows'
       run: |
-        if [ $RUNNER_OS != 'Windows' ]; then
-          source .venv/bin/activate
-        else
-          .venv\Scripts\Activate.ps1
-        fi
+        python -m venv .venv
+        .venv\Scripts\Activate.ps1
+        pip install -e .
+        pip install -r requirements.txt
+      shell: pwsh
+
+    - name: Run CLI basic check on Ubuntu/macOS
+      if: runner.os != 'Windows'
+      run: |
+        source .venv/bin/activate
         python -m visualize_categorical.cli --n 10 --column test --out-dir ./figures
       shell: bash
 
-    - name: Run tests
+    - name: Run CLI basic check on Windows
+      if: runner.os == 'Windows'
       run: |
-        if [ $RUNNER_OS != 'Windows' ]; then
-          source .venv/bin/activate
-        else
-          .venv\Scripts\Activate.ps1
-        fi
+        .venv\Scripts\Activate.ps1
+        python -m visualize_categorical.cli --n 10 --column test --out-dir ./figures
+      shell: pwsh
+
+    - name: Run tests on Ubuntu/macOS
+      if: runner.os != 'Windows'
+      run: |
+        source .venv/bin/activate
         pytest -v
       shell: bash
+
+    - name: Run tests on Windows
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\Activate.ps1
+        pytest -v
+      shell: pwsh

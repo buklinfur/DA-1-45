@@ -30,7 +30,7 @@ jobs:
         if [ $RUNNER_OS != 'Windows' ]; then
           source .venv/bin/activate
         else
-          .venv\Scripts\Activate.ps1
+          ./.venv/Scripts/Activate.ps1
         fi
         pip install -e .
         pip install -r requirements.txt
